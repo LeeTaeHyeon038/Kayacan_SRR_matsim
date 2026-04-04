@@ -1,0 +1,38 @@
+% run_curv_PD.m
+% 논문 Fig.14, 15, 16 재현
+% 원형 궤적 + PD 제어, 샘플링 주기 3가지
+
+clear; clc;
+addpath('core');
+addpath('models');
+
+mdl = 'SRR_PD';
+load_system(mdl);
+
+step_list = [0.001, 0.1, 0.15];
+results_curv_PD = struct();
+
+fprintf('=== 곡선 궤적 PD 시뮬레이션 ===\n');
+for i = 1:length(step_list)
+    dt = step_list(i);
+    fprintf('샘플링 주기 %.3f s 실행 중...\n', dt);
+
+    assignin('base', 'Kp', 1.0);
+    assignin('base', 'Kv', 1.0);
+
+    set_param(mdl, 'FixedStep', num2str(dt));
+
+    simOut = sim(mdl, 'StopTime', '20');
+
+    N  = length(simOut.tout);
+    q  = reshape(simOut.q_out,  4, N)';
+    dq = reshape(simOut.dq_out, 4, N)';
+
+    results_curv_PD(i).dt   = dt;
+    results_curv_PD(i).tout = simOut.tout;
+    results_curv_PD(i).q    = q;
+    results_curv_PD(i).dq   = dq;
+end
+
+save('results/results_curv_PD.mat', 'results_curv_PD');
+fprintf('결과 저장 완료: results_curv_PD.mat\n');
