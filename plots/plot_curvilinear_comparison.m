@@ -7,13 +7,13 @@ addpath('results');
 R        = 0.2;
 v_d      = 0.5;
 e_target = 1.0;
-Omega    = -v_d / e_target;
+Omega    = -v_d / e_target;   % = -0.5 rad/s
+T_sim    = 2*pi / abs(Omega); % 원 한 바퀴 주기 ≈ 12.57 s
 
-%% 목표 원형 궤적
-t_ref   = linspace(0, 20, 2000);
-phi_ref = Omega * t_ref;
-x_ref   = cumtrapz(t_ref, v_d * sin(phi_ref));
-y_ref   = cumtrapz(t_ref, -v_d * cos(phi_ref));
+%% 목표 원형 궤적 (기하학적 원 공식, phi에 무관)
+t_ref = linspace(0, T_sim, 2000);
+x_ref = e_target * (cos(Omega * t_ref) - 1);
+y_ref = e_target *  sin(Omega * t_ref);
 
 %% 결과 로드
 load('results/results_curv_PD.mat');
@@ -27,12 +27,12 @@ for i = 1:3
     res    = results_curv_PD(i);
     tout   = res.tout;
     dtheta = res.dq(:,1);
-    phi    = res.q(:,3);
 
-    dx = R * dtheta .* sin(phi);
-    dy = -R * dtheta .* cos(phi);
-    x  = cumtrapz(tout, dx);
-    y  = cumtrapz(tout, dy);
+    psi = cumtrapz(tout, -R * dtheta / e_target);
+    dx  = R * dtheta .* sin(psi);
+    dy  = -R * dtheta .* cos(psi);
+    x   = cumtrapz(tout, dx);
+    y   = cumtrapz(tout, dy);
 
     subplot(1,3,i);
     plot(x_ref, y_ref, 'k--', 'LineWidth', 2, 'DisplayName', 'Reference'); hold on;
@@ -48,12 +48,12 @@ for i = 1:3
     res    = results_curv_PDFC(i);
     tout   = res.tout;
     dtheta = res.dq(:,1);
-    phi    = res.q(:,3);
 
-    dx = R * dtheta .* sin(phi);
-    dy = -R * dtheta .* cos(phi);
-    x  = cumtrapz(tout, dx);
-    y  = cumtrapz(tout, dy);
+    psi = cumtrapz(tout, -R * dtheta / e_target);
+    dx  = R * dtheta .* sin(psi);
+    dy  = -R * dtheta .* cos(psi);
+    x   = cumtrapz(tout, dx);
+    y   = cumtrapz(tout, dy);
 
     subplot(1,3,i);
     plot(x_ref, y_ref, 'k--', 'LineWidth', 2, 'DisplayName', 'Reference'); hold on;
@@ -64,7 +64,8 @@ end
 sgtitle('Circular Trajectory - PD-Fuzzy Controller');
 
 %% 오차 비교 출력
-fprintf('=== 궤적 추종 오차 비교 ===\n');
+% phi 추종 오차: 올바른 참조값 phi_d = (v_d/(R*Omega))*(1-cos(Omega*t)) 기준
+fprintf('=== 궤적 추종 오차 비교 (phi 기준) ===\n');
 fprintf('%-10s %-15s %-15s\n', 'dt', 'PD phi 오차', 'PDFC phi 오차');
 for i = 1:3
     phi_PD   = results_curv_PD(i).q(:,3);
@@ -72,8 +73,11 @@ for i = 1:3
     t_PD     = results_curv_PD(i).tout;
     t_PDFC   = results_curv_PDFC(i).tout;
 
-    err_PD   = max(abs(phi_PD   - Omega * t_PD));
-    err_PDFC = max(abs(phi_PDFC - Omega * t_PDFC));
+    phi_d_PD   = (v_d / (R * Omega)) * (1 - cos(Omega * t_PD));
+    phi_d_PDFC = (v_d / (R * Omega)) * (1 - cos(Omega * t_PDFC));
+
+    err_PD   = max(abs(phi_PD   - phi_d_PD));
+    err_PDFC = max(abs(phi_PDFC - phi_d_PDFC));
 
     fprintf('dt=%.3f:  PD=%.4f rad,  PDFC=%.4f rad\n', ...
         results_curv_PD(i).dt, err_PD, err_PDFC);

@@ -352,11 +352,23 @@ beta = fzero(@(b) ...
 
 Omega = -v_d / e_target;   % 수직축 각속도 = -0.5 rad/s
 
-ref_q   = [dtheta_d*t; 0; Omega*t; beta];
-ref_dq  = [dtheta_d; 0; Omega; 0];
-ref_ddq = [0; 0; 0; 0];
+% phi 목표값: 구르기 조건 v_y = R*phi_dot과 원운동 기하학 v_y = v_d*sin(Omega*t)로부터
+%   phi_dot_d  = (v_d/R) * sin(Omega*t)
+%   phi_d      = (v_d/(R*Omega)) * (1 - cos(Omega*t))   [Omega<0이므로 음수 방향]
+%   phi_ddot_d = (v_d/R) * Omega * cos(Omega*t)
+phi_d      = (v_d / (R * Omega)) * (1 - cos(Omega * t));
+phi_dot_d  = (v_d / R) * sin(Omega * t);
+phi_ddot_d = (v_d / R) * Omega * cos(Omega * t);
+
+ref_q   = [dtheta_d*t; 0; phi_d; beta];
+ref_dq  = [dtheta_d; 0; phi_dot_d; 0];
+ref_ddq = [0; 0; phi_ddot_d; 0];
 end
 ```
+
+> **구현 시 주의**: 기존 구현에서는 `phi_d = Omega*t` 로 잘못 설정했었다.
+> 이는 구르기 조건 $v_y = R\dot{\phi}$을 무시한 것으로,
+> 올바른 식은 $\dot{\phi}_d = \dfrac{v_d}{R}\sin(\Omega t)$이다.
 
 ---
 
@@ -767,6 +779,10 @@ addpath('../core'); addpath('../models');
 mdl = 'SRR_PD';
 load_system(mdl);
 
+v_d = 0.5; e_target = 1.0;
+Omega = -v_d / e_target;
+T_sim = 2*pi / abs(Omega);   % 원 한 바퀴 주기 ≈ 12.57 s
+
 step_list = [0.001, 0.1, 0.15];
 results_curv_PD = struct();
 fprintf('=== 곡선 궤적 PD ===\n');
@@ -776,7 +792,7 @@ for i = 1:length(step_list)
     assignin('base', 'Kp', 1.0);
     assignin('base', 'Kv', 1.0);
     set_param(mdl, 'FixedStep', num2str(dt));   % 샘플링 주기 변경
-    simOut = sim(mdl, 'StopTime', '20');
+    simOut = sim(mdl, 'StopTime', num2str(T_sim));
     N  = length(simOut.tout);
     results_curv_PD(i).dt   = dt;
     results_curv_PD(i).tout = simOut.tout;
@@ -801,6 +817,10 @@ addpath('../core'); addpath('../models');
 mdl = 'SRR_PDFC';
 load_system(mdl);
 
+v_d = 0.5; e_target = 1.0;
+Omega = -v_d / e_target;
+T_sim = 2*pi / abs(Omega);   % 원 한 바퀴 주기 ≈ 12.57 s
+
 step_list = [0.001, 0.1, 0.15];
 results_curv_PDFC = struct();
 fprintf('=== 곡선 궤적 PDFC ===\n');
@@ -808,7 +828,7 @@ for i = 1:length(step_list)
     dt = step_list(i);
     fprintf('dt = %.3f s\n', dt);
     set_param(mdl, 'FixedStep', num2str(dt));
-    simOut = sim(mdl, 'StopTime', '20');
+    simOut = sim(mdl, 'StopTime', num2str(T_sim));
     N  = length(simOut.tout);
     results_curv_PDFC(i).dt   = dt;
     results_curv_PDFC(i).tout = simOut.tout;

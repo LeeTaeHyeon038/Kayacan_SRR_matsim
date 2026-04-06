@@ -9,6 +9,10 @@ addpath('models');
 mdl = 'SRR_PD';
 load_system(mdl);
 
+v_d = 0.5; e_target = 1.0;
+Omega = -v_d / e_target;
+T_sim = 2*pi / abs(Omega);   % 원 한 바퀴 주기 ≈ 12.57 s
+
 step_list = [0.001, 0.1, 0.15];
 results_curv_PD = struct();
 
@@ -22,7 +26,7 @@ for i = 1:length(step_list)
 
     set_param(mdl, 'FixedStep', num2str(dt));
 
-    simOut = sim(mdl, 'StopTime', '20');
+    simOut = sim(mdl, 'StopTime', num2str(T_sim));
 
     N  = length(simOut.tout);
     q  = reshape(simOut.q_out,  4, N)';
