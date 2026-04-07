@@ -495,8 +495,7 @@ Clock          → Traj_gen (입력: t)
 
 Traj_gen (ref_ddq) → Sum_acc (입력 1번, +)
 Traj_gen (ref_dq)  → Sum_de (입력 1번, +)
-Traj_gen (ref_dq)  → [Integrator로도 분기] → Sum_e (입력 1번, +)
-                     (ref_dq를 적분하면 ref_q가 됨)
+Traj_gen (ref_q) → Sum_e (입력 1번, +)
 
 Sum_de → Kv → Sum_acc (입력 2번)
 Sum_e  → Kp → Sum_acc (입력 3번)
@@ -522,30 +521,13 @@ Integrator_dq 출력 = dq  → ToWS_dq, 피드백으로 분기
 Integrator_q  출력 = q   → ToWS_q, 피드백으로 분기
 ```
 
-> **ref_q 생성 방법**: `ref_q = Traj_gen`에서 직접 받는 것이 아니라, `ref_dq` 신호를 **Integrator 블록**에 통과시켜 생성한다. 즉 `ref_dq`를 시간에 대해 적분하면 `ref_q`가 된다. 이 Integrator의 Initial condition은 `zeros(4,1)`.
+> **ref_q 생성 방법**: ref_q는 Traj_gen 블록에서 직접 출력된다. traj_linear.m, traj_circular.m 내부에서 ref_dq를 시간에 대해 적분한 수식으로 ref_q를 계산하여 반환한다.
 
 ### 5.7 완성된 블록 다이어그램 구조
 
-```
-[Clock] ──────────────────────────────► [Traj_gen]
-                                              │
-                    ┌─ ref_ddq ───────────────┤
-                    │                         │ ref_dq → [Integrator] ─► ref_q
-                    │                         │                              │
-                    │  ref_dq → [Sum_de: +-] → [Kv] ──►┐                   │
-                    │                 ↑                  │                   │
-                    │             dq 피드백              ▼                   │
-                    │                          [Sum_acc: +++] ──► [M_block] ──► [Sum_u: ++] ──► u
-                    │  ref_q ──► [Sum_e: +-] → [Kp] ──►┘                              ↑
-                    │                 ↑                                      [V_block] ┘
-                    │             q 피드백                                         ↑↑
-                    │                                                          q  dq 피드백
-                    └──────────────────────────────────────────────────────────────────────────
-                                                          u ──► [System_ddq] ──► [Int_dq] ──► [Int_q]
-                                                                     ↑↑                dq         q
-                                                                  q  dq                └──────────┘
-                                                                  피드백                  피드백
-```
+
+![[Pasted image 20260407235331.png]]
+
 
 ### 5.8 모델 저장
 
@@ -675,6 +657,8 @@ Fuzzy_gains (출력 2번: Kv_de) → Sum_acc (입력 3번)
 ```
 
 나머지 연결은 `SRR_PD.slx`와 동일하다.
+
+![[Pasted image 20260407235444.png]]
 
 ### 6.4 솔버 및 InitFcn 설정
 
