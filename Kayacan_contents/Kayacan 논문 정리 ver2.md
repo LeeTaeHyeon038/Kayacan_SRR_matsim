@@ -576,13 +576,15 @@ $$\boxed{e \approx \frac{R\dot{\theta}^2\left[I^s - m_p Rl\cos\beta\right] + R\d
 
 #### 구르기 조건으로부터 올바른 $\phi_d$ 유도
 
-구가 미끄러지지 않고 구른다는 조건(rolling without slipping)에서:
+논문 2.1절에서 유도한 y-subsystem 구르기 조건:
 
-$$v_y = R\,\dot{\phi} \tag{구르기 조건}$$
+$$\mathbf{v}^s_y = R\dot{\phi}\,\mathbf{i} \tag{구르기 조건}$$
 
-원운동 기하학으로부터 구의 y방향 속도는:
+$\phi$는 y축 기준 회전각이므로, y축 기준 구름에 의해 생기는 속도는 **$\mathbf{i}$ (x) 방향**이다. 즉 $\dot\phi$가 만들어내는 선속도는 x(i)방향 속도이다.
 
-$$v_y = v_d \sin(\Omega t) \tag{원운동 기하학}$$
+원운동에서 구가 $\mathbf{j}$ 방향을 향해 출발할 때, 시간 $t$에서 구의 x(i)방향 속도는:
+
+$$v_{\mathbf{i}} = v_d \sin(\Omega t) \tag{원운동 기하학}$$
 
 두 식을 연결하면 목표 $\dot{\phi}$가 결정된다:
 
@@ -602,7 +604,7 @@ $$\ddot{\phi}_d = \frac{v_d}{R}\,\Omega\cos(\Omega t)$$
 
 #### $R_{f_0}$의 제약과 $\phi$, $\psi$의 관계
 
-$R_{f_0}$는 회전이 불가한 기준 프레임(inertially fixed frame)이다. 따라서 $R_{f_0}$에서 정의된 $\phi$와 로봇의 heading angle $\psi$를 직접 동일시할 수 없다. 논문의 원형 궤적 분석에서 사용되는 $\Omega$는 수직축($\mathbf{k}$) 방향의 각속도이며, 이는 $\phi$의 시간 미분 $\dot{\phi}$과 구르기 조건을 통해 연결된다. $\phi = \psi$로 단순화하면 구르기 조건을 위반하게 된다.
+$R_{f_0}$는 회전이 불가한 기준 프레임(inertially fixed frame)이다. $\phi$는 이 프레임에서 정의된 y축 기준 구름각이고, $\psi$는 구의 heading angle(수직축 기준 방향각)이다. 이 둘은 구르기 조건 $v_{\mathbf{i}} = R\dot\phi$를 통해 간접적으로 연결될 뿐, **직접 동일시할 수 없다.** 초기 근사 $\phi_d = \Omega t$는 $\phi \equiv \psi$로 놓은 것으로, 구르기 조건에서 나오는 $R$ 스케일링 인자를 무시한 것이다.
 
 ---
 

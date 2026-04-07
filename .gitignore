@@ -3,3 +3,4 @@ slprj/
 *.autosave
 results/*.mat
 *.asv
+.obsidian/
