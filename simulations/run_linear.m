@@ -20,9 +20,11 @@ fprintf('=== Kp 변화 시뮬레이션 ===\n');
 for i = 1:length(Kp_list)
     Kp = Kp_list(i);
     fprintf('Kp=%.1f, Kv=%.1f 실행 중...\n', Kp, Kv);
-    assignin('base', 'Kp', Kp);   % ← 추가
-    assignin('base', 'Kv', Kv);   % ← 추가
-    simOut = sim(mdl, 'StopTime', '20');
+    simIn = Simulink.SimulationInput(mdl);
+    simIn = simIn.setModelParameter('StopTime', '20');
+    simIn = simIn.setVariable('Kp', Kp);
+    simIn = simIn.setVariable('Kv', Kv);
+    simOut = sim(simIn);
 
     results_Kp(i).Kp   = Kp;
     results_Kp(i).Kv   = Kv;
@@ -40,9 +42,11 @@ fprintf('\n=== Kv 변화 시뮬레이션 ===\n');
 for i = 1:length(Kv_list)
     Kv = Kv_list(i);
     fprintf('Kp=%.1f, Kv=%.1f 실행 중...\n', Kp, Kv);
-    assignin('base', 'Kp', Kp);   % ← 추가
-    assignin('base', 'Kv', Kv);   % ← 추가
-    simOut = sim(mdl, 'StopTime', '20');
+    simIn = Simulink.SimulationInput(mdl);
+    simIn = simIn.setModelParameter('StopTime', '20');
+    simIn = simIn.setVariable('Kp', Kp);
+    simIn = simIn.setVariable('Kv', Kv);
+    simOut = sim(simIn);
 
     results_Kv(i).Kp   = Kp;
     results_Kv(i).Kv   = Kv;

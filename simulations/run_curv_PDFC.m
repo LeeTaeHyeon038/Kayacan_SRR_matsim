@@ -22,9 +22,10 @@ for i = 1:length(step_list)
     dt = step_list(i);
     fprintf('샘플링 주기 %.3f s 실행 중...\n', dt);
 
-    set_param(mdl, 'FixedStep', num2str(dt));
-
-    simOut = sim(mdl, 'StopTime', num2str(T_sim));
+    simIn = Simulink.SimulationInput(mdl);
+    simIn = simIn.setModelParameter('FixedStep', num2str(dt));
+    simIn = simIn.setModelParameter('StopTime', num2str(T_sim));
+    simOut = sim(simIn);
 
     N  = length(simOut.tout);
     q  = reshape(simOut.q_out,  4, N)';
