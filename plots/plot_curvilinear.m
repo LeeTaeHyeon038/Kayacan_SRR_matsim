@@ -12,6 +12,10 @@ e_target = 1.0;
 Omega    = -v_d / e_target;   % = -0.5 rad/s
 T_sim    = 2*pi / abs(Omega); % 원 한 바퀴 주기 ≈ 12.57 s
 
+% 식 (39) 계산에 필요한 파라미터
+Ms = 3; mp = 2; l = 0.075; g = 9.81;
+Is = (2/3) * Ms * R^2;
+
 %% 목표 원형 궤적 (기하학적 원 공식, phi에 무관)
 % 곡률 반경 e_target의 원: 중심 (e_target*(cos(0)-1), 0) = (-e,0) → 반지름 e
 t_ref = linspace(0, T_sim, 2000);
@@ -32,12 +36,19 @@ for i = 1:3
     tout = res.tout;
 
     dtheta = res.dq(:,1);
+    beta   = res.q(:,4);
 
-    % heading angle psi: psi_dot = -R*dtheta/e (식 33: Omega = -R*dtheta/e)
-    % phi는 y축 기준 구 회전각(lateral rolling angle)으로 heading angle이 아님
-    psi = cumtrapz(tout, -R * dtheta / e_target);
+    % 실제 곡률 반경 e_actual: 식 (39) [매 시점 beta에서 계산]
+    % e = R*dtheta^2*(Is - mp*R*l*cos(beta) + R^2*(Ms+mp)) / (mp*g*l*sin(beta))
+    e_actual = R .* dtheta.^2 .* (Is - mp*R*l*cos(beta) + R^2*(Ms+mp)) ...
+               ./ (mp*g*l*sin(beta) + 1e-10);
+    % 수치 발산 방지 (과도 구간 등 beta≈0일 때 e가 비정상적으로 커짐)
+    e_actual = max(min(e_actual, 10*e_target), 0.1*e_target);
 
-    % 글로벌 XY: 구르기 속도 v = R*|dtheta|, 방향은 heading psi
+    % heading angle psi: psi_dot = -R*dtheta/e_actual (식 33)
+    psi = cumtrapz(tout, -R * dtheta ./ e_actual);
+
+    % 글로벌 XY 적분
     dx = R * dtheta .* sin(psi);
     dy = -R * dtheta .* cos(psi);
 

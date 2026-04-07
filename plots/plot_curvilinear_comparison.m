@@ -11,6 +11,10 @@ e_target = 1.0;
 Omega    = -v_d / e_target;   % = -0.5 rad/s
 T_sim    = 2*pi / abs(Omega); % 원 한 바퀴 주기 ≈ 12.57 s
 
+% 식 (39) 계산에 필요한 파라미터
+Ms = 3; mp = 2; l = 0.075; g = 9.81;
+Is = (2/3) * Ms * R^2;
+
 %% 목표 원형 궤적 (기하학적 원 공식, phi에 무관)
 t_ref = linspace(0, T_sim, 2000);
 x_ref = e_target * (cos(Omega * t_ref) - 1);
@@ -28,8 +32,12 @@ for i = 1:3
     res    = results_curv_PD(i);
     tout   = res.tout;
     dtheta = res.dq(:,1);
+    beta   = res.q(:,4);
 
-    psi = cumtrapz(tout, -R * dtheta / e_target);
+    e_actual = R .* dtheta.^2 .* (Is - mp*R*l*cos(beta) + R^2*(Ms+mp)) ...
+               ./ (mp*g*l*sin(beta) + 1e-10);
+    e_actual = max(min(e_actual, 10*e_target), 0.1*e_target);
+    psi = cumtrapz(tout, -R * dtheta ./ e_actual);
     dx  = R * dtheta .* sin(psi);
     dy  = -R * dtheta .* cos(psi);
     x   = cumtrapz(tout, dx);
@@ -49,8 +57,12 @@ for i = 1:3
     res    = results_curv_PDFC(i);
     tout   = res.tout;
     dtheta = res.dq(:,1);
+    beta   = res.q(:,4);
 
-    psi = cumtrapz(tout, -R * dtheta / e_target);
+    e_actual = R .* dtheta.^2 .* (Is - mp*R*l*cos(beta) + R^2*(Ms+mp)) ...
+               ./ (mp*g*l*sin(beta) + 1e-10);
+    e_actual = max(min(e_actual, 10*e_target), 0.1*e_target);
+    psi = cumtrapz(tout, -R * dtheta ./ e_actual);
     dx  = R * dtheta .* sin(psi);
     dy  = -R * dtheta .* cos(psi);
     x   = cumtrapz(tout, dx);

@@ -13,7 +13,7 @@
 4. [MATLAB 코어 함수 구현](#4-matlab-코어-함수-구현)
 5. [Simulink 모델 구축 - SRR_PD.slx](#5-simulink-모델-구축---srr_pdslx)
 6. [Simulink 모델 구축 - SRR_PDFC.slx](#6-simulink-모델-구축---srr_pdfcslx)
-7. [시뮬레이션 실행 스크립트](#7-시뮬레이션-실행-스크립트)
+7. [시뮬레이션 실행 및 플롯 스크립트](#7-시뮬레이션-실행-및-플롯-스크립트)
 8. [전체 실행 방법](#8-전체-실행-방법)
 9. [결과 해석](#9-결과-해석)
 10. [주의사항 및 트러블슈팅](#10-주의사항-및-트러블슈팅)
@@ -673,7 +673,7 @@ Fuzzy_gains (출력 2번: Kv_de) → Sum_acc (입력 3번)
 
 ---
 
-## 7. 시뮬레이션 실행 스크립트
+## 7. 시뮬레이션 실행 및 플롯 스크립트
 
 ### 7.1 `simulations/run_linear.m`
 
@@ -840,6 +840,314 @@ end
 
 ---
 
+### 7.5 `plots/plot_results.m` — 직선 궤적 상세 플롯
+
+`run_linear.m` 실행 후 저장된 `results_linear.mat`을 로드해서 속도 추종 결과를 플롯한다. 논문 Fig.8 (Kp 변화), Fig.9 (Kv 변화) 스타일이나, 현재 구현에서는 `Kp=1, Kv=1` 단독 케이스의 상세 플롯(속도, theta, 진자각 alpha, 속도 오차)을 생성한다.
+
+```matlab
+function plot_results()
+clear; clc;
+
+R   = 0.2;
+v_d = 0.5;
+
+load('results/results_linear.mat');
+
+% reshape: simOut이 (4*N)x1 열벡터로 저장된 경우 대응
+for i = 1:length(results_Kp)
+    N = length(results_Kp(i).tout);
+    results_Kp(i).dq = reshape(results_Kp(i).dq, 4, N)';
+    results_Kp(i).q  = reshape(results_Kp(i).q,  4, N)';
+end
+for i = 1:length(results_Kv)
+    N = length(results_Kv(i).tout);
+    results_Kv(i).dq = reshape(results_Kv(i).dq, 4, N)';
+    results_Kv(i).q  = reshape(results_Kv(i).q,  4, N)';
+end
+
+% Kp=1, Kv=1 케이스 추출
+idx = find([results_Kv.Kv] == 1.0, 1);
+res = results_Kv(idx);
+
+dtheta   = res.dq(:, 1);
+alpha    = res.q(:, 2);
+v_actual = R * abs(dtheta);
+v_ref    = v_d * ones(size(res.tout));
+v_error  = v_ref - v_actual;
+
+figure('Name', 'Kp=1 Kv=1 Detail', 'Position', [300, 300, 900, 700]);
+
+subplot(2,2,1);
+plot(res.tout, v_ref,    'k--', 'LineWidth', 1.5, 'DisplayName', 'Reference'); hold on;
+plot(res.tout, v_actual, 'b-',  'LineWidth', 1.5, 'DisplayName', 'PD');
+xlabel('Time (s)'); ylabel('Velocity (m/s)');
+title('Velocity Tracking (Kp=1, Kv=1)'); legend; grid on;
+
+subplot(2,2,2);
+theta_d = (v_d/R) * res.tout;
+plot(res.tout, theta_d,    'k--', 'LineWidth', 1.5, 'DisplayName', 'Reference'); hold on;
+plot(res.tout, res.q(:,1), 'b-',  'LineWidth', 1.5, 'DisplayName', 'PD');
+xlabel('Time (s)'); ylabel('\theta (rad)');
+title('Theta Tracking'); legend; grid on;
+
+subplot(2,2,3);
+plot(res.tout, alpha*(180/pi), 'r-', 'LineWidth', 1.5);
+xlabel('Time (s)'); ylabel('\alpha (deg)');
+title('Pendulum Angle \alpha'); grid on;
+
+subplot(2,2,4);
+plot(res.tout, v_error, 'm-', 'LineWidth', 1.5);
+xlabel('Time (s)'); ylabel('Velocity Error (m/s)');
+title('Velocity Error'); grid on;
+
+fprintf('최대 속도 오차: %.4f m/s\n', max(abs(v_error)));
+idx2 = find(abs(v_error) < 0.01, 1, 'first');
+if ~isempty(idx2)
+    fprintf('정착 시간 (|e|<0.01): %.2f s\n', res.tout(idx2));
+end
+end
+```
+
+> **reshape 처리 이유**: `run_linear.m`에서 이미 `reshape`를 적용해서 저장하지만, 환경에 따라 `.mat` 파일에 원래 shape이 남아있을 수 있어 플롯 시 다시 한 번 처리한다.
+
+---
+
+### 7.6 `plots/plot_linear_comparison.m` — PD vs PDFC 직선 궤적 비교
+
+논문 Fig.12 재현. `results_linear.mat`과 `results_linear_PDFC.mat` 두 파일을 로드해서 속도 추종 및 오차를 비교한다.
+
+```matlab
+function plot_linear_comparison()
+clear; clc;
+addpath('results');
+
+R   = 0.2;
+v_d = 0.5;
+
+load('results/results_linear.mat');
+load('results/results_linear_PDFC.mat');
+
+% Kp=1, Kv=1 PD 결과 추출
+for i = 1:length(results_Kv)
+    N = length(results_Kv(i).tout);
+    results_Kv(i).dq = reshape(results_Kv(i).dq, 4, N)';
+    results_Kv(i).q  = reshape(results_Kv(i).q,  4, N)';
+end
+idx = find([results_Kv.Kv] == 1.0);
+res_PD = results_Kv(idx);
+
+% PDFC 결과 추출
+N = length(results_PDFC.tout);
+results_PDFC.dq = reshape(results_PDFC.dq, 4, N)';
+results_PDFC.q  = reshape(results_PDFC.q,  4, N)';
+res_PDFC = results_PDFC;
+
+v_PD   = R * abs(res_PD.dq(:,1));
+v_PDFC = R * abs(res_PDFC.dq(:,1));
+v_ref  = v_d * ones(size(res_PD.tout));
+e_PD   = v_ref - v_PD;
+e_PDFC = v_d * ones(size(res_PDFC.tout)) - v_PDFC;
+
+% Fig.12 스타일: 속도 추종 비교
+figure('Name', 'Fig.12 - PD vs PDFC', 'Position', [100, 100, 700, 450]);
+hold on;
+plot(res_PD.tout,   v_ref,  'k--', 'LineWidth', 1.5, 'DisplayName', 'Reference');
+plot(res_PD.tout,   v_PD,   'b-',  'LineWidth', 1.5, 'DisplayName', 'PD');
+plot(res_PDFC.tout, v_PDFC, 'r-',  'LineWidth', 1.5, 'DisplayName', 'PDFC');
+xlabel('Time (s)'); ylabel('Velocity (m/s)');
+title('Step responses with PD and PD-Fuzzy controller');
+legend('Location', 'southeast'); grid on; ylim([-0.05, 0.85]);
+
+% 속도 오차 비교
+figure('Name', 'Velocity Error Comparison', 'Position', [200, 200, 700, 450]);
+hold on;
+plot(res_PD.tout,   e_PD,   'b-', 'LineWidth', 1.5, 'DisplayName', 'PD');
+plot(res_PDFC.tout, e_PDFC, 'r-', 'LineWidth', 1.5, 'DisplayName', 'PDFC');
+xlabel('Time (s)'); ylabel('Velocity Error (m/s)');
+title('Velocity Error: PD vs PDFC'); legend; grid on;
+
+fprintf('PD   최대 오차: %.4f m/s\n', max(abs(e_PD)));
+fprintf('PDFC 최대 오차: %.4f m/s\n', max(abs(e_PDFC)));
+end
+```
+
+---
+
+### 7.7 `plots/plot_curvilinear.m` — PD 원형 궤적 플롯
+
+논문 Fig.14-16 재현. `results_curv_PD.mat`을 로드해서 샘플링 주기 3가지 케이스의 XY 궤적을 그린다.
+
+#### XY 위치 복원 방법
+
+`phi`(y축 기준 구 회전각)는 heading angle이 아니므로 직접 XY 적분에 쓸 수 없다. 대신 논문 식 (33) `Ω = -Rθ̇/e`를 이용해 heading angle `psi`를 복원한 뒤, 실제 beta에서 식 (39)로 `e_actual`을 매 시점 계산해서 사용한다.
+
+```
+psi_dot = -R * dtheta / e_actual   (식 33)
+dot_x = R * dtheta * sin(psi)
+dot_y = -R * dtheta * cos(psi)
+```
+
+`e_actual`을 고정값 `e_target`으로 쓰면 beta 오차가 얼마이든 heading이 reference와 동일해져서 실제 궤적과 reference가 항상 겹쳐 보이는 버그가 생긴다.
+
+```matlab
+function plot_curvilinear()
+clear; clc;
+addpath('results');
+addpath('core');
+
+R        = 0.2;
+v_d      = 0.5;
+e_target = 1.0;
+Omega    = -v_d / e_target;        % = -0.5 rad/s
+T_sim    = 2*pi / abs(Omega);      % 원 한 바퀴 주기 ≈ 12.57 s
+
+Ms = 3; mp = 2; l = 0.075; g = 9.81;
+Is = (2/3) * Ms * R^2;
+
+%% 목표 원형 궤적 (기하학적 원 공식)
+% phi에 무관하게 곡률 반경 e_target의 원을 직접 표현
+t_ref = linspace(0, T_sim, 2000);
+x_ref = e_target * (cos(Omega * t_ref) - 1);
+y_ref = e_target *  sin(Omega * t_ref);
+
+load('results/results_curv_PD.mat');
+
+figure('Name', 'Fig.14-16 Circular Trajectory PD', ...
+       'Position', [100, 100, 1100, 400]);
+titles = {'dt = 0.001 s', 'dt = 0.1 s', 'dt = 0.15 s'};
+
+for i = 1:3
+    res    = results_curv_PD(i);
+    tout   = res.tout;
+    dtheta = res.dq(:,1);
+    beta   = res.q(:,4);
+
+    % 식 (39): 실제 beta로 매 시점 곡률 반경 계산
+    e_actual = R .* dtheta.^2 .* (Is - mp*R*l*cos(beta) + R^2*(Ms+mp)) ...
+               ./ (mp*g*l*sin(beta) + 1e-10);
+    e_actual = max(min(e_actual, 10*e_target), 0.1*e_target); % 수치 안정
+
+    % 식 (33): heading angle 적분
+    psi = cumtrapz(tout, -R * dtheta ./ e_actual);
+    dx  = R * dtheta .* sin(psi);
+    dy  = -R * dtheta .* cos(psi);
+    x   = cumtrapz(tout, dx);
+    y   = cumtrapz(tout, dy);
+
+    subplot(1, 3, i);
+    plot(x_ref, y_ref, 'k--', 'LineWidth', 2, 'DisplayName', 'Reference'); hold on;
+    plot(x, y,         'b-',  'LineWidth', 1, 'DisplayName', 'PD');
+    xlabel('X (m)'); ylabel('Y (m)');
+    title(titles{i}); legend('Location', 'best'); grid on; axis equal;
+end
+sgtitle('Circular Trajectory Tracking - PD Controller');
+end
+```
+
+---
+
+### 7.8 `plots/plot_curvilinear_comparison.m` — PD vs PDFC 원형 궤적 비교
+
+논문 Fig.14-19 재현. PD와 PDFC 결과를 각각 별도 figure로 표시하고, phi 추종 오차를 수치로 출력한다.
+
+phi 추종 오차의 reference는 구르기 조건으로부터 유도된 올바른 목표값이다:
+
+$$\phi_d(t) = \frac{v_d}{R\Omega}(1 - \cos(\Omega t))$$
+
+```matlab
+function plot_curvilinear_comparison()
+clear; clc;
+addpath('results');
+
+R        = 0.2;
+v_d      = 0.5;
+e_target = 1.0;
+Omega    = -v_d / e_target;
+T_sim    = 2*pi / abs(Omega);
+
+Ms = 3; mp = 2; l = 0.075; g = 9.81;
+Is = (2/3) * Ms * R^2;
+
+t_ref = linspace(0, T_sim, 2000);
+x_ref = e_target * (cos(Omega * t_ref) - 1);
+y_ref = e_target *  sin(Omega * t_ref);
+
+load('results/results_curv_PD.mat');
+load('results/results_curv_PDFC.mat');
+
+titles = {'dt = 0.001 s', 'dt = 0.1 s', 'dt = 0.15 s'};
+
+%% PD 결과 플롯 (Fig.14-16)
+figure('Name', 'Fig.14-16 PD', 'Position', [100, 100, 1100, 400]);
+for i = 1:3
+    res    = results_curv_PD(i);
+    tout   = res.tout;
+    dtheta = res.dq(:,1);
+    beta   = res.q(:,4);
+
+    e_actual = R .* dtheta.^2 .* (Is - mp*R*l*cos(beta) + R^2*(Ms+mp)) ...
+               ./ (mp*g*l*sin(beta) + 1e-10);
+    e_actual = max(min(e_actual, 10*e_target), 0.1*e_target);
+    psi = cumtrapz(tout, -R * dtheta ./ e_actual);
+    x   = cumtrapz(tout, R * dtheta .* sin(psi));
+    y   = cumtrapz(tout, -R * dtheta .* cos(psi));
+
+    subplot(1,3,i);
+    plot(x_ref, y_ref, 'k--', 'LineWidth', 2, 'DisplayName', 'Reference'); hold on;
+    plot(x, y, 'b-', 'LineWidth', 1, 'DisplayName', 'PD');
+    xlabel('X (m)'); ylabel('Y (m)');
+    title(titles{i}); legend; grid on; axis equal;
+end
+sgtitle('Circular Trajectory - PD Controller');
+
+%% PDFC 결과 플롯 (Fig.17-19)
+figure('Name', 'Fig.17-19 PDFC', 'Position', [100, 550, 1100, 400]);
+for i = 1:3
+    res    = results_curv_PDFC(i);
+    tout   = res.tout;
+    dtheta = res.dq(:,1);
+    beta   = res.q(:,4);
+
+    e_actual = R .* dtheta.^2 .* (Is - mp*R*l*cos(beta) + R^2*(Ms+mp)) ...
+               ./ (mp*g*l*sin(beta) + 1e-10);
+    e_actual = max(min(e_actual, 10*e_target), 0.1*e_target);
+    psi = cumtrapz(tout, -R * dtheta ./ e_actual);
+    x   = cumtrapz(tout, R * dtheta .* sin(psi));
+    y   = cumtrapz(tout, -R * dtheta .* cos(psi));
+
+    subplot(1,3,i);
+    plot(x_ref, y_ref, 'k--', 'LineWidth', 2, 'DisplayName', 'Reference'); hold on;
+    plot(x, y, 'r-', 'LineWidth', 1, 'DisplayName', 'PDFC');
+    xlabel('X (m)'); ylabel('Y (m)');
+    title(titles{i}); legend; grid on; axis equal;
+end
+sgtitle('Circular Trajectory - PD-Fuzzy Controller');
+
+%% phi 추종 오차 수치 출력
+fprintf('=== 궤적 추종 오차 비교 (phi 기준) ===\n');
+fprintf('%-10s %-15s %-15s\n', 'dt', 'PD phi 오차', 'PDFC phi 오차');
+for i = 1:3
+    phi_PD   = results_curv_PD(i).q(:,3);
+    phi_PDFC = results_curv_PDFC(i).q(:,3);
+    t_PD     = results_curv_PD(i).tout;
+    t_PDFC   = results_curv_PDFC(i).tout;
+
+    phi_d_PD   = (v_d / (R * Omega)) * (1 - cos(Omega * t_PD));
+    phi_d_PDFC = (v_d / (R * Omega)) * (1 - cos(Omega * t_PDFC));
+
+    err_PD   = max(abs(phi_PD   - phi_d_PD));
+    err_PDFC = max(abs(phi_PDFC - phi_d_PDFC));
+
+    fprintf('dt=%.3f:  PD=%.4f rad,  PDFC=%.4f rad\n', ...
+        results_curv_PD(i).dt, err_PD, err_PDFC);
+end
+end
+```
+
+> **오차 기준**: `phi_d = Omega*t`는 구르기 조건을 무시한 잘못된 참조값이다. 올바른 참조값은 구르기 조건 $v_y = R\dot{\phi}$과 원운동 기하학 $v_y = v_d\sin(\Omega t)$로부터 유도한 $\phi_d(t) = \frac{v_d}{R\Omega}(1-\cos(\Omega t))$이다.
+
+---
+
 ## 8. 전체 실행 방법
 
 ### 8.1 `run_all.m`
@@ -966,16 +1274,23 @@ plot_curvilinear_comparison()
 
 ### X-Y 궤적 계산 방법
 
-구의 실제 위치는 구르기 조건에서 적분으로 계산한다:
+`phi`(y축 기준 구 회전각)는 heading angle이 아니므로 XY 적분에 직접 사용할 수 없다. 논문 식 (33) `Ω = -Rθ̇/e`를 이용해 heading angle `psi`를 적분 복원하고, 식 (39)로 실제 beta에서 `e_actual`을 매 시점 계산해 사용한다:
 
-$$\dot{x} = R\dot{\theta}\sin(\phi), \quad \dot{y} = -R\dot{\theta}\cos(\phi)$$
+$$\dot{\psi} = -\frac{R\dot{\theta}}{e_\text{actual}}, \quad \dot{x} = R\dot{\theta}\sin\psi, \quad \dot{y} = -R\dot{\theta}\cos\psi$$
 
 ```matlab
-dx = R * dtheta .* sin(phi);
-dy = -R * dtheta .* cos(phi);
-x  = cumtrapz(tout, dx);
-y  = cumtrapz(tout, dy);
+% 식 (39): 실제 beta로 매 시점 곡률 반경 계산
+e_actual = R .* dtheta.^2 .* (Is - mp*R*l*cos(beta) + R^2*(Ms+mp)) ...
+           ./ (mp*g*l*sin(beta) + 1e-10);
+e_actual = max(min(e_actual, 10*e_target), 0.1*e_target);
+
+% 식 (33): heading angle 적분
+psi = cumtrapz(tout, -R * dtheta ./ e_actual);
+x   = cumtrapz(tout, R * dtheta .* sin(psi));
+y   = cumtrapz(tout, -R * dtheta .* cos(psi));
 ```
+
+> **주의**: `e_actual` 대신 `e_target`(고정값)을 쓰면 beta 오차와 무관하게 heading이 reference와 동일해져 XY 궤적이 항상 완벽한 원으로 보이는 버그가 생긴다.
 
 ---
 

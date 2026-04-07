@@ -27,49 +27,49 @@ end
 %% ============================================================
 %% Fig.8 재현: Kv=0.8 고정, Kp 변화
 %% ============================================================
-figure('Name', 'Fig.8 - Kp variation', 'Position', [100, 100, 700, 450]);
-hold on;
-
-colors = {'b', 'r', 'g'};
-tout_ref = results_Kp(1).tout;
-v_ref    = v_d * ones(size(tout_ref));
-plot(tout_ref, v_ref, 'k--', 'LineWidth', 1.5, 'DisplayName', 'Reference');
-
-for i = 1:length(results_Kp)
-    dtheta   = results_Kp(i).dq(:, 1);
-    v_actual = R * abs(dtheta);
-    label    = sprintf('Kp=%.1f Kv=%.1f', results_Kp(i).Kp, results_Kp(i).Kv);
-    plot(results_Kp(i).tout, v_actual, colors{i}, ...
-        'LineWidth', 1.5, 'DisplayName', label);
-end
-
-xlabel('Time (s)'); ylabel('Velocity (m/s)');
-title('Step responses for various proportional gains');
-legend('Location', 'southeast'); grid on;
-ylim([-0.05, 0.85]);
+% figure('Name', 'Fig.8 - Kp variation', 'Position', [100, 100, 700, 450]);
+% hold on;
+% 
+% colors = {'b', 'r', 'g'};
+% tout_ref = results_Kp(1).tout;
+% v_ref    = v_d * ones(size(tout_ref));
+% plot(tout_ref, v_ref, 'k--', 'LineWidth', 1.5, 'DisplayName', 'Reference');
+% 
+% for i = 1:length(results_Kp)
+%     dtheta   = results_Kp(i).dq(:, 1);
+%     v_actual = R * abs(dtheta);
+%     label    = sprintf('Kp=%.1f Kv=%.1f', results_Kp(i).Kp, results_Kp(i).Kv);
+%     plot(results_Kp(i).tout, v_actual, colors{i}, ...
+%         'LineWidth', 1.5, 'DisplayName', label);
+% end
+% 
+% xlabel('Time (s)'); ylabel('Velocity (m/s)');
+% title('Step responses for various proportional gains');
+% legend('Location', 'southeast'); grid on;
+% ylim([-0.05, 0.85]);
 
 %% ============================================================
 %% Fig.9 재현: Kp=1.0 고정, Kv 변화
 %% ============================================================
-figure('Name', 'Fig.9 - Kv variation', 'Position', [200, 200, 700, 450]);
-hold on;
-
-tout_ref = results_Kv(1).tout;
-v_ref    = v_d * ones(size(tout_ref));
-plot(tout_ref, v_ref, 'k--', 'LineWidth', 1.5, 'DisplayName', 'Reference');
-
-for i = 1:length(results_Kv)
-    dtheta   = results_Kv(i).dq(:, 1);
-    v_actual = R * abs(dtheta);
-    label    = sprintf('Kp=%.1f Kv=%.1f', results_Kv(i).Kp, results_Kv(i).Kv);
-    plot(results_Kv(i).tout, v_actual, colors{i}, ...
-        'LineWidth', 1.5, 'DisplayName', label);
-end
-
-xlabel('Time (s)'); ylabel('Velocity (m/s)');
-title('Step responses for various derivative gains');
-legend('Location', 'southeast'); grid on;
-ylim([-0.05, 0.85]);
+% figure('Name', 'Fig.9 - Kv variation', 'Position', [200, 200, 700, 450]);
+% hold on;
+% 
+% tout_ref = results_Kv(1).tout;
+% v_ref    = v_d * ones(size(tout_ref));
+% plot(tout_ref, v_ref, 'k--', 'LineWidth', 1.5, 'DisplayName', 'Reference');
+% 
+% for i = 1:length(results_Kv)
+%     dtheta   = results_Kv(i).dq(:, 1);
+%     v_actual = R * abs(dtheta);
+%     label    = sprintf('Kp=%.1f Kv=%.1f', results_Kv(i).Kp, results_Kv(i).Kv);
+%     plot(results_Kv(i).tout, v_actual, colors{i}, ...
+%         'LineWidth', 1.5, 'DisplayName', label);
+% end
+% 
+% xlabel('Time (s)'); ylabel('Velocity (m/s)');
+% title('Step responses for various derivative gains');
+% legend('Location', 'southeast'); grid on;
+% ylim([-0.05, 0.85]);
 
 %% ============================================================
 %% 추가: Kp=1, Kv=1 단독 결과 상세 플롯
