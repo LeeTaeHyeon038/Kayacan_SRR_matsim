@@ -2,6 +2,7 @@
 % 논문 Fig.17, 18, 19 재현
 % 원형 궤적 + PD-Fuzzy 제어, 샘플링 주기 3가지
 
+function run_curv_PDFC()
 clear; clc;
 addpath('core');
 addpath('models');
@@ -37,3 +38,4 @@ end
 
 save('results/results_curv_PDFC.mat', 'results_curv_PDFC');
 fprintf('결과 저장 완료: results_curv_PDFC.mat\n');
+end

@@ -2,6 +2,7 @@
 % 논문 Fig.12 재현
 % PD-Fuzzy 제어기, Kp=1 Kv=1 직선 궤적
 
+function run_linear_PDFC()
 clear; clc;
 addpath('core');
 addpath('models');
@@ -22,3 +23,4 @@ results_PDFC.dq   = simOut.dq_out;
 
 save('results/results_linear_PDFC.mat', 'results_PDFC');
 fprintf('결과 저장 완료: results_linear_PDFC.mat\n');
+end

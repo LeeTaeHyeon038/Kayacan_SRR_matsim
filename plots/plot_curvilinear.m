@@ -1,7 +1,8 @@
 % plot_curvilinear.m
 % 논문 Fig.14-16 재현: 원형 궤적 추종 결과
 
-clear; clc; close all;
+function plot_curvilinear()
+clear; clc;
 addpath('results');
 addpath('core');
 
@@ -53,3 +54,4 @@ for i = 1:3
 end
 
 sgtitle('Circular Trajectory Tracking - PD Controller');
+end

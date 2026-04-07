@@ -2,7 +2,10 @@
 % 논문 Fig.8, 9, 12 재현
 % 여러 Kp, Kv 조건으로 시뮬레이션 반복 실행
 
+function run_linear()
 clear; clc;
+addpath('core');
+addpath('models');
 mdl = 'SRR_PD';
 
 % 모델 로드
@@ -49,5 +52,6 @@ for i = 1:length(Kv_list)
 end
 
 %% 결과 저장
-save('results_linear.mat', 'results_Kp', 'results_Kv');
+save('results/results_linear.mat', 'results_Kp', 'results_Kv');
 fprintf('\n결과 저장 완료: results_linear.mat\n');
+end

@@ -2,7 +2,8 @@
 % 논문 Fig.8, Fig.9 스타일 플롯
 % run_linear.m 실행 후 사용
 
-clear; clc; close all;
+function plot_results()
+clear; clc;
 
 %% 파라미터
 R   = 0.2;
@@ -114,4 +115,5 @@ fprintf('최대 속도 오차: %.4f m/s\n', max(abs(v_error)));
 idx2 = find(abs(v_error) < 0.01, 1, 'first');
 if ~isempty(idx2)
     fprintf('정착 시간 (|e|<0.01): %.2f s\n', res.tout(idx2));
+end
 end

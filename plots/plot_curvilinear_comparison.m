@@ -1,7 +1,8 @@
 % plot_curvilinear_comparison.m
 % 논문 Fig.14-19 재현: PD vs PDFC 원형 궤적 비교
 
-clear; clc; close all;
+function plot_curvilinear_comparison()
+clear; clc;
 addpath('results');
 
 R        = 0.2;
@@ -81,4 +82,5 @@ for i = 1:3
 
     fprintf('dt=%.3f:  PD=%.4f rad,  PDFC=%.4f rad\n', ...
         results_curv_PD(i).dt, err_PD, err_PDFC);
+end
 end

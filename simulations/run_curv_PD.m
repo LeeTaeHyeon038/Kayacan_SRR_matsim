@@ -2,6 +2,7 @@
 % 논문 Fig.14, 15, 16 재현
 % 원형 궤적 + PD 제어, 샘플링 주기 3가지
 
+function run_curv_PD()
 clear; clc;
 addpath('core');
 addpath('models');
@@ -40,3 +41,4 @@ end
 
 save('results/results_curv_PD.mat', 'results_curv_PD');
 fprintf('결과 저장 완료: results_curv_PD.mat\n');
+end

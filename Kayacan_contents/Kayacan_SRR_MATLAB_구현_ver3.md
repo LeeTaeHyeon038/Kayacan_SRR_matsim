@@ -697,8 +697,10 @@ Fuzzy_gains (출력 2번: Kv_de) → Sum_acc (입력 3번)
 
 ```matlab
 % run_linear.m
+function run_linear()
 clear; clc;
-addpath('../core'); addpath('../models');
+addpath('core');
+addpath('models');
 
 mdl = 'SRR_PD';
 load_system(mdl);
@@ -739,8 +741,11 @@ end
 
 save('results/results_linear.mat', 'results_Kp', 'results_Kv');
 fprintf('저장 완료\n');
+end
 ```
 
+> **함수로 작성한 이유**: 스크립트로 작성하면 `clear`가 호출자(`run_all.m`)의 workspace까지 초기화한다. 함수로 감싸면 `clear`가 함수 내부 workspace만 초기화하여 단독 실행과 `run_all.m` 실행 모두에서 올바르게 동작한다. 단독 실행 시에는 프로젝트 루트를 Current Folder로 설정한 뒤 `run_linear()` 명령으로 호출한다.
+>
 > **`assignin('base', 'Kp', Kp)` 사용 이유**: Simulink 모델의 Gain 블록은 MATLAB base workspace에서 변수를 읽어온다. 스크립트 안에서 `Kp = 0.6`처럼 변수를 바꿔도 Simulink가 인식하지 못하는 경우가 있어서 `assignin`으로 명시적으로 넣어준다.
 >
 > **`reshape(simOut.q_out, 4, N)'` 사용 이유**: `sim()` 함수가 반환하는 `simOut.q_out`의 shape이 `(4*N) x 1` 열벡터 형태일 수 있다. `reshape(data, 4, N)'`으로 `N x 4` 행렬로 변환해야 `dq(:,1)` 형태로 각 채널을 뽑을 수 있다.
@@ -749,8 +754,10 @@ fprintf('저장 완료\n');
 
 ```matlab
 % run_linear_PDFC.m
+function run_linear_PDFC()
 clear; clc;
-addpath('../core'); addpath('../models');
+addpath('core');
+addpath('models');
 
 mdl = 'SRR_PDFC';
 load_system(mdl);
@@ -764,6 +771,7 @@ results_PDFC.dq   = reshape(simOut.dq_out, 4, N)';
 
 save('results/results_linear_PDFC.mat', 'results_PDFC');
 fprintf('저장 완료\n');
+end
 ```
 
 ### 7.3 `simulations/run_curv_PD.m`
@@ -773,8 +781,10 @@ fprintf('저장 완료\n');
 ```matlab
 % run_curv_PD.m
 % Traj_gen이 traj_circular로 설정된 상태에서 실행해야 함
+function run_curv_PD()
 clear; clc;
-addpath('../core'); addpath('../models');
+addpath('core');
+addpath('models');
 
 mdl = 'SRR_PD';
 load_system(mdl);
@@ -802,6 +812,7 @@ end
 
 save('results/results_curv_PD.mat', 'results_curv_PD');
 fprintf('저장 완료\n');
+end
 ```
 
 > **`set_param(mdl, 'FixedStep', num2str(dt))` 사용 이유**: `sim()` 함수의 인자로 `'FixedStep'`을 넘기는 것보다 `set_param`으로 모델에 직접 설정하는 것이 더 확실하게 반영된다.
@@ -811,8 +822,10 @@ fprintf('저장 완료\n');
 ```matlab
 % run_curv_PDFC.m
 % Traj_gen이 traj_circular로 설정된 상태에서 실행해야 함
+function run_curv_PDFC()
 clear; clc;
-addpath('../core'); addpath('../models');
+addpath('core');
+addpath('models');
 
 mdl = 'SRR_PDFC';
 load_system(mdl);
@@ -838,6 +851,7 @@ end
 
 save('results/results_curv_PDFC.mat', 'results_curv_PDFC');
 fprintf('저장 완료\n');
+end
 ```
 
 ---
@@ -908,13 +922,44 @@ fprintf('\n=== 전체 시뮬레이션 완료 ===\n');
 
 **Step 2**: `run_all` 실행
 
-**Step 3**: 직선 궤적 시뮬레이션 자동 실행 (Fig.8, 9, 12 그래프 생성)
+**Step 3**: 직선 궤적 시뮬레이션 자동 실행. 총 5개 figure 생성 (Fig.8, Fig.9, Kp=1 Kv=1 상세, Fig.12, 속도 오차 비교). 모든 figure는 닫히지 않고 유지된다.
 
 **Step 4**: Command Window에 안내 메시지가 뜨면 두 Simulink 모델의 `Traj_gen` 블록 코드를 `traj_circular`로 변경 후 저장 → **Enter**
 
-**Step 5**: 곡선 궤적 시뮬레이션 자동 실행 (Fig.14-19 그래프 생성)
+**Step 5**: 곡선 궤적 시뮬레이션 자동 실행. 추가로 3개 figure 생성 (Fig.14-16 PD, Fig.17-19 PDFC). 이전 figure와 함께 총 8개 figure가 모두 열려 있다.
 
 **Step 6**: 다시 안내 메시지가 뜨면 `traj_linear`로 복원 후 **Enter**
+
+> **figure 관리**: `run_all.m` 실행 중 생성된 모든 figure는 자동으로 닫히지 않는다. 확인 후 직접 닫거나, 다음 실행 전 Command Window에서 `close all`을 입력한다.
+
+### 8.3 시뮬레이션 스크립트 단독 실행
+
+각 시뮬레이션 스크립트를 개별적으로 실행할 수도 있다. 단독 실행 시에도 `run_all.m`과 동일한 결과가 생성된다.
+
+**전제 조건**: MATLAB Current Folder가 `Kayacan_SRR_matsim` 루트여야 한다.
+
+```matlab
+% 직선 궤적 (SRR_PD, Kp/Kv 변화)
+run_linear()
+
+% 직선 궤적 (SRR_PDFC)
+run_linear_PDFC()
+
+% 곡선 궤적 (SRR_PD) — Traj_gen이 traj_circular인 상태에서 실행
+run_curv_PD()
+
+% 곡선 궤적 (SRR_PDFC) — Traj_gen이 traj_circular인 상태에서 실행
+run_curv_PDFC()
+```
+
+결과를 그리려면:
+
+```matlab
+plot_results()
+plot_linear_comparison()
+plot_curvilinear()
+plot_curvilinear_comparison()
+```
 
 ---
 

@@ -1,7 +1,8 @@
 % plot_linear_comparison.m
 % 논문 Fig.12 재현: PD vs PD-Fuzzy 비교
 
-clear; clc; close all;
+function plot_linear_comparison()
+clear; clc;
 addpath('results');
 
 R   = 0.2;
@@ -66,4 +67,5 @@ if ~isempty(idx_PD)
 end
 if ~isempty(idx_FC)
     fprintf('PDFC 정착 시간: %.2f s\n', res_PDFC.tout(idx_FC));
+end
 end
