@@ -36,7 +36,7 @@ for i = 1:3
 
     e_actual = R .* dtheta.^2 .* (Is - mp*R*l*cos(beta) + R^2*(Ms+mp)) ...
                ./ (mp*g*l*sin(beta) + 1e-10);
-    e_actual = max(min(e_actual, 10*e_target), 0.1*e_target);
+    e_actual = max(min(e_actual, 10000*e_target), 0.01*e_target);
     psi = cumtrapz(tout, -R * dtheta ./ e_actual);
     dx  = R * dtheta .* sin(psi);
     dy  = -R * dtheta .* cos(psi);
