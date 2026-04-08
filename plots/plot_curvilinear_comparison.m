@@ -24,7 +24,7 @@ y_ref = e_target *  sin(Omega * t_ref);
 load('results/results_curv_PD.mat');
 load('results/results_curv_PDFC.mat');
 
-titles = {'dt = 0.001 s', 'dt = 0.1 s', 'dt = 0.15 s'};
+titles = {'dt = 0.001 s', 'dt = 0.5 s', 'dt = 1.0 s'};
 
 %% PD 결과 플롯 (Fig.14-16)
 figure('Name', 'Fig.14-16 PD', 'Position', [100, 100, 1100, 400]);

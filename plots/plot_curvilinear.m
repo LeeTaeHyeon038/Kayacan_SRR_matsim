@@ -29,7 +29,7 @@ load('results/results_curv_PD.mat');
 figure('Name', 'Fig.14-16 Circular Trajectory PD', ...
        'Position', [100, 100, 1100, 400]);
 
-titles = {'dt = 0.001 s', 'dt = 0.1 s', 'dt = 0.15 s'};
+titles = {'dt = 0.001 s', 'dt = 0.5 s', 'dt = 1.0 s'};
 
 for i = 1:3
     res  = results_curv_PD(i);

@@ -11,7 +11,7 @@ load_system(mdl);
 v_d = 0.5; e_target = 1.0;
 Omega = -v_d / e_target;
 T_sim = 2*pi / abs(Omega);   % 원 한 바퀴 주기 ≈ 12.57 s
-step_list = [0.001, 0.1, 0.15];
+step_list = [0.001, 0.5, 1.0];
 results_curv_PD = struct();
 fprintf('=== 곡선 궤적 PD 시뮬레이션 ===\n');
 
